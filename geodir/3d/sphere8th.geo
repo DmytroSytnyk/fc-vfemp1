@@ -1,0 +1,41 @@
+DefineConstant[
+  N = {10, Name "Input/1Points "}
+];
+R=1; // radius 
+h=1/N;
+// 1/ Points :
+Point(1) = {0,0,0,h};
+Point(2) = {R,0,0,h};
+Point(3) = {0,R,0,h};
+Point(4) = {0,0,R,h};
+Line(1) = {1, 2};
+Line(2) = {1, 3};
+Line(3) = {1, 4};
+Circle(4) = {2, 1, 3};
+Circle(5) = {2, 1, 4};
+Circle(6) = {3, 1, 4};
+Line Loop(7) = {1, 4, -2};
+Plane Surface(8) = {7};
+Line Loop(9) = {1, 5, -3};
+Plane Surface(10) = {9};
+Line Loop(11) = {2, 6, -3};
+Plane Surface(12) = {11};
+Line Loop(13) = {5, -6, -4};
+Ruled Surface(14) = {13};
+Surface Loop(15) = {14, 10, 8, 12};
+Volume(16) = {15};
+Physical Point(101) = {1};
+Physical Point(102) = {2};
+Physical Point(103) = {3};
+Physical Point(104) = {4};
+Physical Line(21) = {1};
+Physical Line(22) = {2};
+Physical Line(23) = {3};
+Physical Line(24) = {4};
+Physical Line(25) = {5};
+Physical Line(26) = {6};
+Physical Surface(11) = {8};
+Physical Surface(12) = {10};
+Physical Surface(13) = {12};
+Physical Surface(14) = {14};
+Physical Volume(1) = {16};
