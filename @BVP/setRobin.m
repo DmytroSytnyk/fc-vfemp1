@@ -19,19 +19,19 @@ function self=setRobin(self,label,fun,ar,Lm)
       self.pdes{idxlab}.delta(l)=1;
       for k=1:self.m
         if k~=l
-          self.pdes{idxlab}.Op.H{l,k}=[];
+          self.pdes{idxlab}.Op=[];
         else
-          self.pdes{idxlab}.Op.H{l,l}=LopD;
+          self.pdes{idxlab}.Op=LopD;
         end
       end
       if iscell(fun)
-        self.pdes{idxlab}.f{l}=Fdata(fun{i});
+        self.pdes{idxlab}.f=Fdata(fun{i});
       elseif fc_tools.utils.isfunhandle(fun)
-        self.pdes{idxlab}.f{l}=Fdata(fun);
+        self.pdes{idxlab}.f=Fdata(fun);
       elseif size(fun,1)==length(Lm)
-        self.pdes{idxlab}.f{l}=Fdata(fun(i,:));
+        self.pdes{idxlab}.f=Fdata(fun(i,:));
       elseif size(fun,2)==length(Lm)
-        self.pdes{idxlab}.f{l}=Fdata(fun(:,i));
+        self.pdes{idxlab}.f=Fdata(fun(:,i));
       else
         self.pdes{idxlab}.f{l}=Fdata(fun);
       end

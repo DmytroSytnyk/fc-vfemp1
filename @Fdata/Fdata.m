@@ -44,12 +44,10 @@ classdef Fdata < handle
       switch type
         case 'C'
           u=fun;
+%           if length(u)==1, u=u*ones(sTh.nq,1);end
         case 'P1'
           if strcmp(class(fun),'function_handle')
-            if nargin(fun)==1,u=fun(sTh.q).';else
-            %if sTh.dim==1, u=fun(sTh.q).';else
-              u=eval(['fun(sTh.q(1,:)',sprintf(',sTh.q(%d,:)',2:sTh.dim),').'';']) ; 
-            end
+            u = sTh.eval(fun);
             if length(u)==1, u=u*ones(sTh.nq,1);end
           elseif isnumeric(fun)
             if size(fun,1) == sTh.nq
@@ -167,6 +165,7 @@ classdef Fdata < handle
         obj.label=obj1.label
         obj.type=obj1.type;
         fun=obj1.fun{1}
+        c = obj2;
         if strcmp(class(fun),'function_handle')
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj2),';']) ;
@@ -182,6 +181,7 @@ classdef Fdata < handle
         obj.label=obj2.label
         obj.type=obj2.type;
         fun=obj2.fun{1};
+        c = obj1;
         if strcmp(class(fun),'function_handle')
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj1),';']) ; 
@@ -205,7 +205,7 @@ classdef Fdata < handle
           sarg=argfunhandle(f1);
           assert(strcmp(sarg,argfunhandle(f2)))
           obj=Fdata();
-          obj.label=obj1.label
+          obj.label=obj1.label;
           obj.type=obj1.type;
           n=nargin(f1);
           obj.fun{1}=eval([sarg ,'(',strfunhandle(f1),')-(',strfunhandle(f2),')']);
@@ -214,9 +214,10 @@ classdef Fdata < handle
         end
       elseif ( strcmp(class(obj1),'Fdata') && isnumeric(obj2) )
         obj=Fdata();
-        obj.label=obj1.label
+        obj.label=obj1.label;
         obj.type=obj1.type;
-        fun=obj1.fun{1}
+        fun=obj1.fun{1};
+        c = obj2;
         if strcmp(class(fun),'function_handle')
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj2),';']) ;
@@ -229,9 +230,10 @@ classdef Fdata < handle
         end
       elseif ( strcmp(class(obj2),'Fdata') && isnumeric(obj1) )
         obj=Fdata();
-        obj.label=obj2.label
+        obj.label=obj2.label;
         obj.type=obj2.type;
         fun=obj2.fun{1};
+        c = obj1;
         if strcmp(class(fun),'function_handle')
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj1),';']) ; 
