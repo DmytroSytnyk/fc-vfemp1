@@ -94,6 +94,46 @@ classdef Fdata < handle
       end
     end
     
+    function obj=real(self)
+          obj=Fdata();
+          obj.label=self.label
+          obj.type=self.type;
+          fun=self.fun{1};type=self.type{1};
+      switch type
+        case 'C'
+          obj.fun{1} = real(fun);
+        case {'P1','P0'}
+          if strcmp(class(fun),'function_handle')
+%             real_fun = @(fun) eval([argfunhandle(self.fun),'real(',strfunhandle(self.fun),')']);
+            obj.fun{1} = eval([argfunhandle(fun),'real(',strfunhandle(fun),')']);
+          elseif isnumeric(fun)
+            obj.fun{1} = real(fun);
+          else
+            error('Unknow fun : %s',class(self.fun))
+          end
+      end
+    end
+
+    function obj=imag(self)
+          obj=Fdata();
+          obj.label=self.label
+          obj.type=self.type;
+          fun=self.fun{1};type=self.type{1};
+      switch type
+        case 'C'
+          obj.fun{1} = imag(fun);
+        case {'P1','P0'}
+          if strcmp(class(fun),'function_handle')
+%             real_fun = @(fun) eval([argfunhandle(self.fun),'real(',strfunhandle(self.fun),')']);
+            obj.fun{1} = eval([argfunhandle(fun),'imag(',strfunhandle(fun),')']);
+          elseif isnumeric(fun)
+            obj.fun{1} = imag(fun);
+          else
+            error('Unknow fun : %s',class(self.fun))
+          end
+      end
+    end
+    
     function obj=mtimes(obj1,obj2)
       if  ( strcmp(class(obj1),'Fdata') && strcmp(class(obj2),'Fdata') )
         f1=obj1.fun{1};f2=obj2.fun{1};
@@ -104,7 +144,6 @@ classdef Fdata < handle
           obj=Fdata();
           obj.label=obj1.label
           obj.type=obj1.type;
-          n=nargin(f1);
           obj.fun{1}=eval([sarg ,'(',strfunhandle(f1),').*(',strfunhandle(f2),')']);
         else
           error('Not yet implemented...')
@@ -118,11 +157,13 @@ classdef Fdata < handle
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj2),';']) ;
           cfun=char(fun);
-          I=strfind(cfun,')');I=I(1);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
           cexp=[cfun(1:I),sprintf(' %.16e*(',obj2),cfun(I+1:end),')'];
           obj.fun{1}=eval(cexp);
         else % numerical
-          obj.fun{1}=fun+obj2;
+          obj.fun{1}=fun.*obj2;
         end
       elseif ( strcmp(class(obj2),'Fdata') && isnumeric(obj1) )
         obj=Fdata();
@@ -133,17 +174,71 @@ classdef Fdata < handle
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj1),';']) ; 
           cfun=char(fun);
-          I=strfind(cfun,')');I=I(1);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
           cexp=[cfun(1:I),sprintf(' %.16e*(',obj1),cfun(I+1:end),')'];
           obj.fun{1}=eval(cexp);
         else % numerical
-          obj.fun{1}=fun+obj1;
+          obj.fun{1}=fun.*obj1;
         end
       else
         error('[Fdata] Incompatible type %s and %s',class(obj1),class(obj2))
       end
     end
     
+    function obj=mrdivide(obj1,obj2)
+      if  ( strcmp(class(obj1),'Fdata') && strcmp(class(obj2),'Fdata') )
+        f1=obj1.fun{1};f2=obj2.fun{1};
+        if fc_tools.utils.isfunhandle(f1) && fc_tools.utils.isfunhandle(f2)
+          assert(nargin(f1)==nargin(f2)); % to improve
+          sarg=argfunhandle(f1);
+          assert(strcmp(sarg,argfunhandle(f2)))
+          obj=Fdata();
+          obj.label=obj1.label
+          obj.type=obj1.type;
+          obj.fun{1}=eval([sarg ,'(',strfunhandle(f1),')./(',strfunhandle(f2),')']);
+        else
+          error('Not yet implemented...')
+        end
+      elseif ( strcmp(class(obj1),'Fdata') && isnumeric(obj2) )
+        obj=Fdata();
+        obj.label=obj1.label
+        obj.type=obj1.type;
+        fun=obj1.fun{1}
+        if strcmp(class(fun),'function_handle')
+          %n=nargin(fun);
+          %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj2),';']) ;
+          cfun=char(fun);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
+          cexp=[cfun(1:I),'(',cfun(I+1:end),')./',sprintf(' %.16e',obj2)];
+          obj.fun{1}=eval(cexp);
+        else % numerical
+          obj.fun{1}=fun./obj2;
+        end
+      elseif ( strcmp(class(obj2),'Fdata') && isnumeric(obj1) )
+        obj=Fdata();
+        obj.label=obj2.label
+        obj.type=obj2.type;
+        fun=obj2.fun{1};
+        if strcmp(class(fun),'function_handle')
+          %n=nargin(fun);
+          %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj1),';']) ; 
+          cfun=char(fun);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
+          cexp=[cfun(1:I),sprintf(' %.16e',obj1),'./(',cfun(I+1:end),')'];
+          obj.fun{1}=eval(cexp);
+        else % numerical
+          obj.fun{1}=obj1./fun;
+        end
+      else
+        error('[Fdata] Incompatible type %s and %s',class(obj1),class(obj2))
+      end
+    end
     
     function obj=plus(obj1,obj2)
       if  ( strcmp(class(obj1),'Fdata') && strcmp(class(obj2),'Fdata') )
@@ -170,7 +265,9 @@ classdef Fdata < handle
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj2),';']) ;
           cfun=char(fun);
-          I=strfind(cfun,')');I=I(1);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
           cexp=[cfun(1:I),' (',cfun(I+1:end),')+',sprintf('%.16e',obj2)];
           obj.fun{1}=eval(cexp);
         else % numerical
@@ -186,7 +283,9 @@ classdef Fdata < handle
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj1),';']) ; 
           cfun=char(fun);
-          I=strfind(cfun,')');I=I(1);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
           cexp=[cfun(1:I),sprintf(' %.16e+(',obj1),cfun(I+1:end),')'];
           obj.fun{1}=eval(cexp);
         else % numerical
@@ -222,11 +321,13 @@ classdef Fdata < handle
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj2),';']) ;
           cfun=char(fun);
-          I=strfind(cfun,')');I=I(1);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
           cexp=[cfun(1:I),' (',cfun(I+1:end),')-',sprintf('%.16e',obj2)];
           obj.fun{1}=eval(cexp);
         else % numerical
-          obj.fun{1}=fun+c;
+          obj.fun{1}=fun-c;
         end
       elseif ( strcmp(class(obj2),'Fdata') && isnumeric(obj1) )
         obj=Fdata();
@@ -238,11 +339,13 @@ classdef Fdata < handle
           %n=nargin(fun);
           %obj.fun{1}=eval(['@(a1',sprintf(',a%d',2:n),') ','fun(a1',sprintf(',a%d',2:n),')+',sprintf('%.16f',obj1),';']) ; 
           cfun=char(fun);
-          I=strfind(cfun,')');I=I(1);
+          I=strfind(cfun,')');
+          assert(~isempty(I));
+          I=I(1);
           cexp=[cfun(1:I),sprintf(' %.16e-(',obj1),cfun(I+1:end),')'];
           obj.fun{1}=eval(cexp);
         else % numerical
-          obj.fun{1}=fun+c;
+          obj.fun{1}=c - fun;
         end
       else
         error('[Fdata] Incompatible type %s and %s',class(obj1),class(obj2))
@@ -254,3 +357,16 @@ classdef Fdata < handle
     end
   end % methods
 end %classdef
+
+function [sarg] = argfunhandle(f)
+cfun=char(f);
+I=strfind(cfun,')');I=I(1);
+sarg = cfun(1:I);
+end
+
+function [sbody,sarg] = strfunhandle(f)
+cfun=char(f);
+I=strfind(cfun,')');I=I(1);
+sbody=cfun(I+1:end);
+sarg = cfun(1:I);
+end
